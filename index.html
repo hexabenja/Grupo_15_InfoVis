@@ -4,57 +4,172 @@
   <meta charset="UTF-8">
   <title>Dependencia ofensiva</title>
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    #page {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 10px 16px 6px;
+    }
+
+    h2 {
+      margin: 0 0 2px;
+      font-size: 18px;
+    }
+
+    .subtitle {
+      color: gray;
+      margin: 0 0 6px;
+      font-size: 13px;
+    }
+
+    .definition-box {
+      display: inline-block;
+      text-align: left;
+      background: #f5f4fe;
+      border-left: 4px solid #534AB7;
+      border-radius: 0 6px 6px 0;
+      padding: 6px 14px;
+      margin: 0 auto 6px;
+      font-size: 12px;
+      color: #444;
+      max-width: 680px;
+    }
+
+    .legend {
+      display: inline-flex;
+      gap: 18px;
+      margin-bottom: 4px;
+      font-size: 12px;
+      color: #555;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .size-note {
+      font-size: 11px;
+      color: gray;
+      margin: 0 0 4px;
+    }
+
+    #chart {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .annotation-box {
+      display: inline-block;
+      text-align: left;
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 7px 16px;
+      margin: 4px auto 0;
+      font-size: 12px;
+      color: #555;
+      max-width: 680px;
+      line-height: 1.5;
+    }
+
+    .annotation-box .badge {
+      display: inline-block;
+      background: #FCEBEB;
+      color: #A32D2D;
+      font-size: 11px;
+      font-weight: bold;
+      border-radius: 4px;
+      padding: 1px 7px;
+      margin-right: 5px;
+    }
+  </style>
 </head>
 
-<body style="font-family: Arial; text-align: center; margin: 0;">
+<body>
+<div id="page">
 
-<h2 style="margin-bottom: 5px;">¿Qué equipos dependen más de su goleador?</h2>
+  <h2>¿Qué equipos dependen más de su goleador?</h2>
+  <p class="subtitle">Datos correspondientes a la Premier League temporada 2025–2026</p>
 
-<p style="color: gray; margin-top: 0;">
-  Datos correspondientes a la Premier League temporada 2025–2026
-</p>
+  <div class="definition-box">
+    <strong>Dependencia (%)</strong>: porcentaje de los goles del equipo anotados por su máximo goleador.
+    Un valor alto indica que el equipo depende de ese jugador para generar peligro ofensivo.
+  </div>
 
-<p style="font-size: 12px; color: gray;">
-  El tamaño de las pelotas representa los goles totales del equipo
-</p>
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: red;"></div>
+      Alta dependencia (&gt;35%)
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: orange;"></div>
+      Media-alta (30–35%)
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: blue;"></div>
+      Baja–media (&lt;30%)
+    </div>
+  </div>
 
-<div id="chart" style="width:1100px;height:600px;margin:auto;"></div>
+  <p class="size-note">El tamaño de las pelotas representa los goles totales del equipo</p>
+
+  <div id="chart"></div>
+
+  <div class="annotation-box">
+    <span class="badge">Caso extremo</span>
+    <strong>Brentford</strong> es el equipo más dependiente: el <strong>42%</strong> de sus goles
+    los marcó Igor Thiago. Una lesión podría costarle casi la mitad de su producción ofensiva.
+    En el extremo opuesto, <strong>Wolverhampton</strong> (14%) es el equipo menos dependiente de la liga.
+  </div>
+
+</div>
 
 <script>
-
 var data = [
-  {Equipo:"Arsenal", dep:19, total:57, goleador:"Viktor Gyökeres", goles:11},
-  {Equipo:"Aston Villa", dep:23, total:40, goleador:"Ollie Watkins", goles:9},
-  {Equipo:"Bournemouth", dep:25, total:36, goleador:"Eli Junior Kroupi", goles:9},
-  {Equipo:"Brentford", dep:42, total:45, goleador:"Igor Thiago", goles:19},
-  {Equipo:"Brighton", dep:30, total:40, goleador:"Danny Welbeck", goles:12},
-  {Equipo:"Burnley", dep:27, total:30, goleador:"Zian Flemming", goles:8},
-  {Equipo:"Chelsea", dep:27, total:52, goleador:"João Pedro", goles:14},
-  {Equipo:"Crystal Palace", dep:24, total:33, goleador:"Jean-Philippe Mateta", goles:8},
-  {Equipo:"Everton", dep:17, total:35, goleador:"Thierno Barry", goles:6},
-  {Equipo:"Fulham", dep:26, total:39, goleador:"Harry Wilson", goles:10},
-  {Equipo:"Leeds", dep:27, total:37, goleador:"Dominic Calvert-Lewin", goles:10},
-  {Equipo:"Liverpool", dep:23, total:48, goleador:"Hugo Ekitiké", goles:11},
-  {Equipo:"Manchester City", dep:32, total:69, goleador:"Erling Haaland", goles:22},
-  {Equipo:"Manchester United", dep:17, total:53, goleador:"Bryan Mbeumo", goles:9},
-  {Equipo:"Newcastle", dep:20, total:44, goleador:"Bruno Guimarães", goles:9},
-  {Equipo:"Nottingham Forest", dep:29, total:31, goleador:"Morgan Gibbs-White", goles:9},
-  {Equipo:"Sunderland", dep:21, total:29, goleador:"Brian Brobbey", goles:6},
-  {Equipo:"Tottenham", dep:24, total:37, goleador:"Richarlison", goles:9},
-  {Equipo:"West Ham", dep:24, total:34, goleador:"Jarrod Bowen", goles:8},
-  {Equipo:"Wolverhampton", dep:14, total:22, goleador:"Tolu Arokodare", goles:3}
+  {Equipo:"Brentford",          dep:42, total:45, goleador:"Igor Thiago",            goles:19},
+  {Equipo:"Manchester City",    dep:32, total:69, goleador:"Erling Haaland",          goles:22},
+  {Equipo:"Brighton",           dep:30, total:40, goleador:"Danny Welbeck",           goles:12},
+  {Equipo:"Nottingham Forest",  dep:29, total:31, goleador:"Morgan Gibbs-White",      goles:9},
+  {Equipo:"Chelsea",            dep:27, total:52, goleador:"João Pedro",              goles:14},
+  {Equipo:"Leeds",              dep:27, total:37, goleador:"Dominic Calvert-Lewin",   goles:10},
+  {Equipo:"Fulham",             dep:26, total:39, goleador:"Harry Wilson",            goles:10},
+  {Equipo:"Bournemouth",        dep:25, total:36, goleador:"Eli Junior Kroupi",       goles:9},
+  {Equipo:"Arsenal",            dep:19, total:57, goleador:"Viktor Gyökeres",         goles:11},
+  {Equipo:"Newcastle",          dep:20, total:44, goleador:"Bruno Guimarães",         goles:9},
+  {Equipo:"Manchester United",  dep:17, total:53, goleador:"Bryan Mbeumo",            goles:9},
+  {Equipo:"Everton",            dep:17, total:35, goleador:"Thierno Barry",           goles:6},
+  {Equipo:"Wolverhampton",      dep:14, total:22, goleador:"Tolu Arokodare",          goles:3}
 ];
 
-// ordenar
-data.sort(function(a,b){
-  return b.dep - a.dep;
-});
+data.sort(function(a,b){ return b.dep - a.dep; });
 
-var equipos = [];
-var dependencia = [];
-var sizes = [];
-var colors = [];
-var hoverInfo = [];
+var equipos = [], dependencia = [], sizes = [], colors = [], hoverInfo = [];
 
 for (var i = 0; i < data.length; i++) {
   equipos.push(data[i].Equipo);
@@ -70,6 +185,10 @@ for (var i = 0; i < data.length; i++) {
     colors.push("blue");
   }
 }
+
+var sum = 0;
+for (var i = 0; i < data.length; i++) { sum += data[i].dep; }
+var avg = Math.round(sum / data.length);
 
 var trace = {
   x: dependencia,
@@ -92,34 +211,39 @@ var layout = {
   hovermode: "closest",
   xaxis: {
     title: "Dependencia (%)",
-    range: [0,50]
+    range: [0, 50]
   },
   yaxis: {
     autorange: "reversed"
   },
-  margin: {
-    l: 180,
-    t: 10
-  },
+  margin: { l: 150, t: 10, r: 60, b: 45 },
   shapes: [
     {
       type: "line",
-      x0: 25,
-      x1: 25,
-      y0: -1,
-      y1: data.length,
-      line: {
-        dash: "dash",
-        color: "gray"
-      }
+      x0: avg, x1: avg,
+      y0: -1, y1: data.length,
+      line: { dash: "dash", color: "gray" }
+    }
+  ],
+  annotations: [
+    {
+      x: avg,
+      y: data.length - 0.3,
+      xref: "x", yref: "y",
+      text: "Promedio: " + avg + "%",
+      showarrow: false,
+      font: { size: 11, color: "#666" },
+      xanchor: "left",
+      bgcolor: "white",
+      borderpad: 3
     }
   ]
 };
 
 Plotly.newPlot("chart", [trace], layout, {
   displayModeBar: false,
+  responsive: true
 });
-
 </script>
 
 </body>
