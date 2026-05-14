@@ -3,248 +3,295 @@
 <head>
   <meta charset="UTF-8">
   <title>Dependencia ofensiva</title>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:    #C0392B;
+      --orange: #E67E22;
+      --blue:   #2471A3;
+      --bg:     #F8F7F4;
+      --card:   #FFFFFF;
+      --border: #E5E2DC;
+      --text:   #1A1A1A;
+      --muted:  #7A7570;
+      --avg:    #999;
+    }
 
     html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-      text-align: center;
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
     }
 
     #page {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      padding: 10px 16px 6px;
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 28px 20px 32px;
     }
 
-    h2 {
-      margin: 0 0 2px;
-      font-size: 18px;
+    .header { margin-bottom: 16px; }
+
+    .header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      font-weight: 400;
+      line-height: 1.3;
+      margin-bottom: 4px;
     }
 
-    .subtitle {
-      color: gray;
-      margin: 0 0 6px;
-      font-size: 13px;
+    .header p {
+      font-size: 12.5px;
+      color: var(--muted);
     }
 
-    .definition-box {
-      display: inline-block;
-      text-align: left;
-      background: #f5f4fe;
-      border-left: 4px solid #534AB7;
+    .def-box {
+      background: #EEF2FF;
+      border-left: 3px solid #4F63D2;
       border-radius: 0 6px 6px 0;
-      padding: 6px 14px;
-      margin: 0 auto 6px;
+      padding: 8px 14px;
       font-size: 12px;
-      color: #444;
-      max-width: 680px;
+      color: #3A3A3A;
+      margin-bottom: 16px;
+      line-height: 1.55;
     }
 
     .legend {
-      display: inline-flex;
-      gap: 18px;
-      margin-bottom: 4px;
-      font-size: 12px;
-      color: #555;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .legend-item {
       display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-bottom: 18px;
       align-items: center;
-      gap: 5px;
     }
 
-    .legend-swatch {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-      flex-shrink: 0;
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+    .chart-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 20px 16px 0;
     }
 
-    .size-note {
-      font-size: 11px;
-      color: gray;
-      margin: 0 0 4px;
+    .row {
+      display: grid;
+      grid-template-columns: 180px 1fr 44px;
+      align-items: center;
+      margin-bottom: 9px;
     }
 
-    #chart {
-      flex: 1;
-      min-height: 0;
-      width: 100%;
-      max-width: 1000px;
-      margin: 0 auto;
+    .row:last-child { margin-bottom: 0; }
+
+    .label-cell { padding-right: 10px; text-align: right; }
+    .team-name  { font-size: 12.5px; font-weight: 500; line-height: 1.2; }
+    .scorer-name{ font-size: 10.5px; color: var(--muted); line-height: 1.2; }
+
+    .bar-cell { position: relative; }
+
+    .bar-track {
+      height: 19px;
+      background: #F0EFEC;
+      border-radius: 0 4px 4px 0;
+      position: relative;
+      overflow: visible;
     }
 
-    .annotation-box {
-      display: inline-block;
-      text-align: left;
-      background: #f9f9f9;
-      border: 1px solid #e0e0e0;
+    .bar-fill {
+      height: 100%;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .avg-line {
+      position: absolute;
+      top: 0;
+      width: 1.5px;
+      background: var(--avg);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .val-cell {
+      font-size: 12.5px;
+      font-weight: 700;
+      padding-left: 8px;
+      white-space: nowrap;
+    }
+
+    .x-axis {
+      display: grid;
+      grid-template-columns: 180px 1fr 44px;
+      margin-top: 6px;
+    }
+
+    .x-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: var(--muted);
+    }
+
+    .avg-label-wrap {
+      display: grid;
+      grid-template-columns: 180px 1fr 44px;
+      margin-top: 3px;
+    }
+
+    .avg-label {
+      font-size: 10.5px;
+      color: var(--avg);
+    }
+
+    .annotation {
+      margin-top: 14px;
+      background: #FDF3F3;
+      border: 1px solid #F0CECE;
       border-radius: 8px;
-      padding: 7px 16px;
-      margin: 4px auto 0;
+      padding: 10px 16px;
       font-size: 12px;
-      color: #555;
-      max-width: 680px;
-      line-height: 1.5;
+      color: #444;
+      line-height: 1.55;
     }
 
-    .annotation-box .badge {
+    .badge {
       display: inline-block;
-      background: #FCEBEB;
-      color: #A32D2D;
-      font-size: 11px;
-      font-weight: bold;
+      background: #C0392B;
+      color: #fff;
+      font-size: 10.5px;
+      font-weight: 700;
       border-radius: 4px;
-      padding: 1px 7px;
-      margin-right: 5px;
+      padding: 1px 8px;
+      margin-right: 6px;
     }
   </style>
 </head>
-
 <body>
 <div id="page">
 
-  <h2>¿Qué equipos dependen más de su goleador?</h2>
-  <p class="subtitle">Datos correspondientes a la Premier League temporada 2025–2026</p>
+  <div class="header">
+    <h1>¿Qué equipos dependen más de su goleador?</h1>
+    <p>Premier League · Temporada 2025–2026 · 20 equipos</p>
+  </div>
 
-  <div class="definition-box">
-    <strong>Dependencia (%)</strong>: porcentaje de los goles del equipo anotados por su máximo goleador.
-    Un valor alto indica que el equipo depende de ese jugador para generar peligro ofensivo.
+  <div class="def-box">
+    <strong>Dependencia (%)</strong>: porcentaje de los goles del equipo anotados por su máximo goleador individual.
+    Un valor alto significa que ese equipo recae fuertemente en un solo jugador para generar goles.
   </div>
 
   <div class="legend">
     <div class="legend-item">
-      <div class="legend-swatch" style="background: red;"></div>
+      <div class="swatch" style="background:var(--red)"></div>
       Alta dependencia (&gt;35%)
     </div>
     <div class="legend-item">
-      <div class="legend-swatch" style="background: orange;"></div>
+      <div class="swatch" style="background:var(--orange)"></div>
       Media-alta (30–35%)
     </div>
     <div class="legend-item">
-      <div class="legend-swatch" style="background: blue;"></div>
+      <div class="swatch" style="background:var(--blue)"></div>
       Baja–media (&lt;30%)
     </div>
   </div>
 
-  <p class="size-note">El tamaño de las pelotas representa los goles totales del equipo</p>
+  <div class="chart-wrap">
+    <div id="rows"></div>
 
-  <div id="chart"></div>
+    <div class="x-axis">
+      <div></div>
+      <div class="x-ticks">
+        <span>0%</span><span>10%</span><span>20%</span>
+        <span>30%</span><span>40%</span><span>50%</span>
+      </div>
+      <div></div>
+    </div>
 
-  <div class="annotation-box">
+    <div class="avg-label-wrap">
+      <div></div>
+      <div class="avg-label" id="avgLabel"></div>
+      <div></div>
+    </div>
+  </div>
+
+  <div class="annotation">
     <span class="badge">Caso extremo</span>
     <strong>Brentford</strong> es el equipo más dependiente: el <strong>42%</strong> de sus goles
-    los marcó Igor Thiago. Una lesión podría costarle casi la mitad de su producción ofensiva.
-    En el extremo opuesto, <strong>Wolverhampton</strong> (14%) es el equipo menos dependiente de la liga.
+    los marcó Igor Thiago (19 goles). Una lesión podría costarle casi la mitad de su producción
+    ofensiva. En el extremo opuesto, <strong>Wolverhampton</strong> (14%) distribuye mejor su
+    ataque y es el equipo <em>menos</em> dependiente de la liga.
   </div>
 
 </div>
 
 <script>
 var data = [
-  {Equipo:"Brentford",          dep:42, total:45, goleador:"Igor Thiago",            goles:19},
-  {Equipo:"Manchester City",    dep:32, total:69, goleador:"Erling Haaland",          goles:22},
-  {Equipo:"Brighton",           dep:30, total:40, goleador:"Danny Welbeck",           goles:12},
-  {Equipo:"Nottingham Forest",  dep:29, total:31, goleador:"Morgan Gibbs-White",      goles:9},
-  {Equipo:"Chelsea",            dep:27, total:52, goleador:"João Pedro",              goles:14},
-  {Equipo:"Leeds",              dep:27, total:37, goleador:"Dominic Calvert-Lewin",   goles:10},
-  {Equipo:"Fulham",             dep:26, total:39, goleador:"Harry Wilson",            goles:10},
-  {Equipo:"Bournemouth",        dep:25, total:36, goleador:"Eli Junior Kroupi",       goles:9},
-  {Equipo:"Arsenal",            dep:19, total:57, goleador:"Viktor Gyökeres",         goles:11},
-  {Equipo:"Newcastle",          dep:20, total:44, goleador:"Bruno Guimarães",         goles:9},
-  {Equipo:"Manchester United",  dep:17, total:53, goleador:"Bryan Mbeumo",            goles:9},
-  {Equipo:"Everton",            dep:17, total:35, goleador:"Thierno Barry",           goles:6},
-  {Equipo:"Wolverhampton",      dep:14, total:22, goleador:"Tolu Arokodare",          goles:3}
+  {team:"Arsenal",           dep:19, scorer:"Viktor Gyökeres",     goals:11, total:57},
+  {team:"Aston Villa",       dep:23, scorer:"Ollie Watkins",        goals:9,  total:40},
+  {team:"Bournemouth",       dep:25, scorer:"Eli Junior Kroupi",    goals:9,  total:36},
+  {team:"Brentford",         dep:42, scorer:"Igor Thiago",          goals:19, total:45},
+  {team:"Brighton",          dep:30, scorer:"Danny Welbeck",        goals:12, total:40},
+  {team:"Burnley",           dep:27, scorer:"Zian Flemming",        goals:8,  total:30},
+  {team:"Chelsea",           dep:27, scorer:"João Pedro",           goals:14, total:52},
+  {team:"Crystal Palace",    dep:24, scorer:"J-P. Mateta",          goals:8,  total:33},
+  {team:"Everton",           dep:17, scorer:"Thierno Barry",        goals:6,  total:35},
+  {team:"Fulham",            dep:26, scorer:"Harry Wilson",         goals:10, total:39},
+  {team:"Leeds United",      dep:27, scorer:"D. Calvert-Lewin",     goals:10, total:37},
+  {team:"Liverpool",         dep:23, scorer:"Hugo Ekitiké",         goals:11, total:48},
+  {team:"Manchester City",   dep:32, scorer:"Erling Haaland",       goals:22, total:69},
+  {team:"Manchester United", dep:17, scorer:"Bryan Mbeumo",         goals:9,  total:53},
+  {team:"Newcastle United",  dep:20, scorer:"Bruno Guimarães",      goals:9,  total:44},
+  {team:"Nottingham Forest", dep:29, scorer:"Morgan Gibbs-White",   goals:9,  total:31},
+  {team:"Sunderland",        dep:21, scorer:"Brian Brobbey",        goals:6,  total:29},
+  {team:"Tottenham",         dep:24, scorer:"Richarlison",          goals:9,  total:37},
+  {team:"West Ham United",   dep:24, scorer:"Jarrod Bowen",         goals:8,  total:34},
+  {team:"Wolverhampton",     dep:14, scorer:"Tolu Arokodare",       goals:3,  total:22}
 ];
 
 data.sort(function(a,b){ return b.dep - a.dep; });
 
-var equipos = [], dependencia = [], sizes = [], colors = [], hoverInfo = [];
+var MAX = 50;
+var avg = Math.round(data.reduce(function(s,d){ return s + d.dep; }, 0) / data.length);
 
-for (var i = 0; i < data.length; i++) {
-  equipos.push(data[i].Equipo);
-  dependencia.push(data[i].dep);
-  sizes.push(data[i].total / 2);
-  hoverInfo.push("<b>" + data[i].goleador + "</b><br>" + data[i].goles + " goles");
+var container = document.getElementById('rows');
 
-  if (data[i].dep >= 35) {
-    colors.push("red");
-  } else if (data[i].dep >= 30) {
-    colors.push("orange");
-  } else {
-    colors.push("blue");
-  }
-}
+data.forEach(function(d) {
+  var pct = (d.dep / MAX * 100).toFixed(2);
+  var col = d.dep >= 35 ? 'var(--red)' : d.dep >= 30 ? 'var(--orange)' : 'var(--blue)';
+  var bg  = d.dep >= 35 ? '#C0392B'    : d.dep >= 30 ? '#E67E22'        : '#2471A3';
 
-var sum = 0;
-for (var i = 0; i < data.length; i++) { sum += data[i].dep; }
-var avg = Math.round(sum / data.length);
+  var row = document.createElement('div');
+  row.className = 'row';
+  row.innerHTML =
+    '<div class="label-cell">' +
+      '<div class="team-name">'   + d.team   + '</div>' +
+      '<div class="scorer-name">' + d.scorer + ' · ' + d.goals + ' goles</div>' +
+    '</div>' +
+    '<div class="bar-cell">' +
+      '<div class="bar-track">' +
+        '<div class="bar-fill" style="width:' + pct + '%;background:' + bg + '"></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="val-cell" style="color:' + col + '">' + d.dep + '%</div>';
 
-var trace = {
-  x: dependencia,
-  y: equipos,
-  text: hoverInfo,
-  mode: "markers",
-  type: "scatter",
-  hovertemplate:
-    "%{y}<br>" +
-    "Dependencia: %{x}%<br>" +
-    "%{text}" +
-    "<extra></extra>",
-  marker: {
-    size: sizes,
-    color: colors
-  }
-};
+  container.appendChild(row);
+});
 
-var layout = {
-  hovermode: "closest",
-  xaxis: {
-    title: "Dependencia (%)",
-    range: [0, 50]
-  },
-  yaxis: {
-    autorange: "reversed"
-  },
-  margin: { l: 150, t: 10, r: 60, b: 45 },
-  shapes: [
-    {
-      type: "line",
-      x0: avg, x1: avg,
-      y0: -1, y1: data.length,
-      line: { dash: "dash", color: "gray" }
-    }
-  ],
-  annotations: [
-    {
-      x: avg,
-      y: data.length - 0.3,
-      xref: "x", yref: "y",
-      text: "Promedio: " + avg + "%",
-      showarrow: false,
-      font: { size: 11, color: "#666" },
-      xanchor: "left",
-      bgcolor: "white",
-      borderpad: 3
-    }
-  ]
-};
+window.addEventListener('load', function() {
+  var avgPct = (avg / MAX * 100);
 
-Plotly.newPlot("chart", [trace], layout, {
-  displayModeBar: false,
-  responsive: true
+  document.querySelectorAll('.bar-track').forEach(function(track) {
+    var line = document.createElement('div');
+    line.className = 'avg-line';
+    line.style.left   = avgPct + '%';
+    line.style.height = '100%';
+    track.appendChild(line);
+  });
+
+  document.getElementById('avgLabel').style.paddingLeft = (avgPct - 1.5) + '%';
+  document.getElementById('avgLabel').textContent = '▲ Promedio: ' + avg + '%';
 });
 </script>
-
 </body>
 </html>
