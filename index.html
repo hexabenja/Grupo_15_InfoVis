@@ -3,295 +3,518 @@
 <head>
   <meta charset="UTF-8">
   <title>Dependencia ofensiva</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://unpkg.com/tone@latest/build/Tone.js"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --red:    #C0392B;
-      --orange: #E67E22;
-      --blue:   #2471A3;
-      --bg:     #F8F7F4;
-      --card:   #FFFFFF;
-      --border: #E5E2DC;
-      --text:   #1A1A1A;
-      --muted:  #7A7570;
-      --avg:    #999;
-    }
+    *, *::before, *::after { box-sizing: border-box; }
 
     html, body {
-      background: var(--bg);
-      font-family: 'DM Sans', sans-serif;
-      color: var(--text);
+      margin: 0; padding: 0;
+      height: 100%; overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: #fff; color: #222;
     }
 
     #page {
-      max-width: 820px;
-      margin: 0 auto;
-      padding: 28px 20px 32px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 10px 20px 6px;
     }
 
-    .header { margin-bottom: 16px; }
+    h2 { margin: 0 0 1px; font-size: 17px; }
+    .subtitle { color: gray; margin: 0 0 5px; font-size: 12px; }
 
-    .header h1 {
-      font-family: 'DM Serif Display', serif;
-      font-size: 22px;
-      font-weight: 400;
-      line-height: 1.3;
-      margin-bottom: 4px;
-    }
-
-    .header p {
-      font-size: 12.5px;
-      color: var(--muted);
-    }
-
-    .def-box {
-      background: #EEF2FF;
-      border-left: 3px solid #4F63D2;
+    .definition-box {
+      display: inline-block;
+      text-align: left;
+      background: #f5f4fe;
+      border-left: 4px solid #534AB7;
       border-radius: 0 6px 6px 0;
-      padding: 8px 14px;
+      padding: 5px 14px;
+      margin: 0 auto 6px;
+      font-size: 11.5px;
+      color: #444;
+      max-width: 680px;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+
+    .tab {
+      padding: 4px 14px;
+      border-radius: 20px;
+      border: 1.5px solid #ccc;
       font-size: 12px;
-      color: #3A3A3A;
-      margin-bottom: 16px;
-      line-height: 1.55;
+      cursor: pointer;
+      background: #fff;
+      color: #555;
+      transition: all 0.2s;
+    }
+
+    .tab:hover { border-color: #534AB7; color: #534AB7; }
+    .tab.active {
+      background: #534AB7;
+      border-color: #534AB7;
+      color: #fff;
+      font-weight: bold;
     }
 
     .legend {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
+      display: inline-flex;
+      gap: 16px;
+      margin-bottom: 3px;
       font-size: 11.5px;
-      color: var(--muted);
-      margin-bottom: 18px;
-      align-items: center;
+      color: #555;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
-    .legend-item { display: flex; align-items: center; gap: 6px; }
-    .swatch { width: 10px; height: 10px; border-radius: 2px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-swatch { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+    .size-note { font-size: 11px; color: gray; margin: 0 0 3px; }
 
-    .chart-wrap {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 20px 20px 16px 0;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 180px 1fr 44px;
-      align-items: center;
-      margin-bottom: 9px;
-    }
-
-    .row:last-child { margin-bottom: 0; }
-
-    .label-cell { padding-right: 10px; text-align: right; }
-    .team-name  { font-size: 12.5px; font-weight: 500; line-height: 1.2; }
-    .scorer-name{ font-size: 10.5px; color: var(--muted); line-height: 1.2; }
-
-    .bar-cell { position: relative; }
-
-    .bar-track {
-      height: 19px;
-      background: #F0EFEC;
-      border-radius: 0 4px 4px 0;
-      position: relative;
-      overflow: visible;
-    }
-
-    .bar-fill {
-      height: 100%;
-      border-radius: 0 4px 4px 0;
-    }
-
-    .avg-line {
-      position: absolute;
-      top: 0;
-      width: 1.5px;
-      background: var(--avg);
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    .val-cell {
-      font-size: 12.5px;
-      font-weight: 700;
-      padding-left: 8px;
-      white-space: nowrap;
-    }
-
-    .x-axis {
-      display: grid;
-      grid-template-columns: 180px 1fr 44px;
-      margin-top: 6px;
-    }
-
-    .x-ticks {
+    #main {
+      flex: 1;
+      min-height: 0;
       display: flex;
-      justify-content: space-between;
-      font-size: 10.5px;
-      color: var(--muted);
+      gap: 12px;
     }
 
-    .avg-label-wrap {
-      display: grid;
-      grid-template-columns: 180px 1fr 44px;
-      margin-top: 3px;
+    #chart {
+    flex: 1;
+    min-height: 10px;
+    min-width: 0;
+    height: 90%;     
+    max-height: 500px; 
+  }
+
+
+    #panel {
+      width: 210px;
+      flex-shrink: 0;
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      justify-content: center;
+      transition: opacity 0.3s;
     }
 
-    .avg-label {
-      font-size: 10.5px;
-      color: var(--avg);
-    }
+    #panel.empty { opacity: 0.35; }
+    #panel .panel-hint { text-align: center; color: #aaa; font-size: 12px; line-height: 1.5; }
+    #panel .panel-team { font-size: 15px; font-weight: bold; color: #222; border-bottom: 1.5px solid #e0e0e0; padding-bottom: 6px; margin-bottom: 2px; }
+    #panel .panel-row { font-size: 12px; color: #555; display: flex; justify-content: space-between; }
+    #panel .panel-row span { font-weight: bold; color: #222; }
+    #panel .panel-label { font-size: 11px; color: #888; margin-top: 6px; margin-bottom: 2px; }
 
-    .annotation {
-      margin-top: 14px;
-      background: #FDF3F3;
-      border: 1px solid #F0CECE;
+    .bar-wrap { background: #eee; border-radius: 4px; height: 14px; width: 100%; position: relative; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+    .bar-label-row { display: flex; justify-content: space-between; font-size: 10.5px; color: #888; margin-top: 2px; }
+    .dep-meter {
+      position: relative;
+      height: 8px;
+      background: linear-gradient(
+        to right,
+        #2E7D32 0%,
+        #2E7D32 60%,
+        #FB8C00 60%,
+        #FB8C00 70%,
+        #C62828 70%,
+        #C62828 100%
+      );
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+    .dep-needle { position: absolute; top: -3px; width: 3px; height: 14px; background: #222; border-radius: 2px; transform: translateX(-50%); transition: left 0.5s; }
+
+    .sound-note { font-size: 10.5px; color: #888; text-align: center; margin-top: 4px; }
+
+    .annotation-box {
+      display: inline-block;
+      text-align: left;
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
       border-radius: 8px;
-      padding: 10px 16px;
-      font-size: 12px;
-      color: #444;
-      line-height: 1.55;
+      padding: 6px 14px;
+      margin: 4px auto 0;
+      font-size: 11.5px;
+      color: #555;
+      max-width: 760px;
+      line-height: 1.5;
     }
 
     .badge {
       display: inline-block;
-      background: #C0392B;
-      color: #fff;
+      background: #FCEBEB;
+      color: #A32D2D;
       font-size: 10.5px;
-      font-weight: 700;
+      font-weight: bold;
       border-radius: 4px;
-      padding: 1px 8px;
-      margin-right: 6px;
+      padding: 1px 7px;
+      margin-right: 5px;
     }
   </style>
 </head>
+
 <body>
 <div id="page">
 
-  <div class="header">
-    <h1>¿Qué equipos dependen más de su goleador?</h1>
-    <p>Premier League · Temporada 2025–2026 · 20 equipos</p>
+  <h2>¿Qué equipos son más vulnerables si pierden a su goleador?</h2>
+  <p class="subtitle">Dependencia ofensiva del máximo anotador · Temporada 2025–2026</p>
+
+  <div class="definition-box">
+    <strong>Dependencia (%)</strong>: porcentaje de los goles del equipo anotados por su máximo goleador.
+    Un valor alto implica mayor <em>vulnerabilidad</em> ante una lesión o baja de ese jugador.
   </div>
 
-  <div class="def-box">
-    <strong>Dependencia (%)</strong>: porcentaje de los goles del equipo anotados por su máximo goleador individual.
-    Un valor alto significa que ese equipo recae fuertemente en un solo jugador para generar goles.
+  <div class="tabs">
+    <button class="tab active" onclick="switchLeague('premier', this)">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</button>
+    <button class="tab" onclick="switchLeague('laliga', this)">🇪🇸 La Liga</button>
+    <button class="tab" onclick="switchLeague('bundesliga', this)">🇩🇪 Bundesliga</button>
+    <button class="tab" onclick="switchLeague('seriea', this)">🇮🇹 Serie A</button>
+    <button class="tab" onclick="switchLeague('ligue1', this)">🇫🇷 Ligue 1</button>
   </div>
 
   <div class="legend">
-    <div class="legend-item">
-      <div class="swatch" style="background:var(--red)"></div>
-      Alta dependencia (&gt;35%)
-    </div>
-    <div class="legend-item">
-      <div class="swatch" style="background:var(--orange)"></div>
-      Media-alta (30–35%)
-    </div>
-    <div class="legend-item">
-      <div class="swatch" style="background:var(--blue)"></div>
-      Baja–media (&lt;30%)
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#C62828;"></div>
+    Alta dependencia (&gt;35%)
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#FB8C00;"></div>
+    Media-alta (30–35%)
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#2E7D32;"></div>
+    Baja–media (&lt;30%)
+  </div>
+</div>
+
+  <div id="main">
+    <div id="chart"></div>
+    <div id="panel" class="empty">
+      <div class="panel-hint">Haz clic en<br>un equipo para<br>ver su detalle</div>
     </div>
   </div>
 
-  <div class="chart-wrap">
-    <div id="rows"></div>
-
-    <div class="x-axis">
-      <div></div>
-      <div class="x-ticks">
-        <span>0%</span><span>10%</span><span>20%</span>
-        <span>30%</span><span>40%</span><span>50%</span>
-      </div>
-      <div></div>
-    </div>
-
-    <div class="avg-label-wrap">
-      <div></div>
-      <div class="avg-label" id="avgLabel"></div>
-      <div></div>
-    </div>
-  </div>
-
-  <div class="annotation">
-    <span class="badge">Caso extremo</span>
-    <strong>Brentford</strong> es el equipo más dependiente: el <strong>42%</strong> de sus goles
-    los marcó Igor Thiago (19 goles). Una lesión podría costarle casi la mitad de su producción
-    ofensiva. En el extremo opuesto, <strong>Wolverhampton</strong> (14%) distribuye mejor su
-    ataque y es el equipo <em>menos</em> dependiente de la liga.
-  </div>
+  <div class="annotation-box" id="footer-note"></div>
 
 </div>
 
 <script>
-var data = [
-  {team:"Arsenal",           dep:19, scorer:"Viktor Gyökeres",     goals:11, total:57},
-  {team:"Aston Villa",       dep:23, scorer:"Ollie Watkins",        goals:9,  total:40},
-  {team:"Bournemouth",       dep:25, scorer:"Eli Junior Kroupi",    goals:9,  total:36},
-  {team:"Brentford",         dep:42, scorer:"Igor Thiago",          goals:19, total:45},
-  {team:"Brighton",          dep:30, scorer:"Danny Welbeck",        goals:12, total:40},
-  {team:"Burnley",           dep:27, scorer:"Zian Flemming",        goals:8,  total:30},
-  {team:"Chelsea",           dep:27, scorer:"João Pedro",           goals:14, total:52},
-  {team:"Crystal Palace",    dep:24, scorer:"J-P. Mateta",          goals:8,  total:33},
-  {team:"Everton",           dep:17, scorer:"Thierno Barry",        goals:6,  total:35},
-  {team:"Fulham",            dep:26, scorer:"Harry Wilson",         goals:10, total:39},
-  {team:"Leeds United",      dep:27, scorer:"D. Calvert-Lewin",     goals:10, total:37},
-  {team:"Liverpool",         dep:23, scorer:"Hugo Ekitiké",         goals:11, total:48},
-  {team:"Manchester City",   dep:32, scorer:"Erling Haaland",       goals:22, total:69},
-  {team:"Manchester United", dep:17, scorer:"Bryan Mbeumo",         goals:9,  total:53},
-  {team:"Newcastle United",  dep:20, scorer:"Bruno Guimarães",      goals:9,  total:44},
-  {team:"Nottingham Forest", dep:29, scorer:"Morgan Gibbs-White",   goals:9,  total:31},
-  {team:"Sunderland",        dep:21, scorer:"Brian Brobbey",        goals:6,  total:29},
-  {team:"Tottenham",         dep:24, scorer:"Richarlison",          goals:9,  total:37},
-  {team:"West Ham United",   dep:24, scorer:"Jarrod Bowen",         goals:8,  total:34},
-  {team:"Wolverhampton",     dep:14, scorer:"Tolu Arokodare",       goals:3,  total:22}
-];
+var leagues = {
 
-data.sort(function(a,b){ return b.dep - a.dep; });
+  premier: {
+    note: '<span class="badge">Caso extremo</span><strong>Brentford</strong> es el equipo más vulnerable: Igor Thiago marcó el <strong>42%</strong> de sus goles (21 de 50). Una lesión podría costarle casi la mitad de su producción. En el extremo opuesto, <strong>Wolverhampton</strong> (14%) es el equipo menos dependiente.',
+    data: [
+      {Equipo:"Brentford",        dep:42, total:50, goleador:"Igor Thiago",           goles:21},
+      {Equipo:"Manchester City",  dep:33, total:69, goleador:"Erling Haaland",         goles:23},
+      {Equipo:"Brighton",         dep:29, total:41, goleador:"Danny Welbeck",          goles:12},
+      {Equipo:"Nottm Forest",     dep:28, total:32, goleador:"Morgan Gibbs-White",     goles:9},
+      {Equipo:"Chelsea",          dep:27, total:52, goleador:"João Pedro",             goles:14},
+      {Equipo:"Leeds",            dep:26, total:42, goleador:"D. Calvert-Lewin",       goles:11},
+      {Equipo:"Bournemouth",      dep:25, total:40, goleador:"Eli Junior Kroupi",      goles:10},
+      {Equipo:"Fulham",           dep:24, total:38, goleador:"Raul Jimenez",           goles:9},
+      {Equipo:"Newcastle",        dep:21, total:43, goleador:"Jean-Phil. Mateta",      goles:9},
+      {Equipo:"Arsenal",          dep:19, total:63, goleador:"Viktor Gyökeres",        goles:12},
+      {Equipo:"Aston Villa",      dep:18, total:61, goleador:"Ollie Watkins",          goles:11},
+      {Equipo:"Man. United",      dep:17, total:53, goleador:"Zian Flemming",          goles:9},
+      {Equipo:"Wolverhampton",    dep:14, total:22, goleador:"Hugo Ekitiké",           goles:3}
+    ]
+  },
 
-var MAX = 50;
-var avg = Math.round(data.reduce(function(s,d){ return s + d.dep; }, 0) / data.length);
+  laliga: {
+    note: '<span class="badge">Caso extremo</span><strong>Getafe</strong> depende en un <strong>40%</strong> de Vedat Muriqi (21 goles de 52). Si cae lesionado, el equipo perdería la mayor parte de su peligro ofensivo. <strong>Barcelona</strong> (18%) tiene el ataque más colectivo de la liga.',
+    data: [
+      {Equipo:"Getafe",           dep:40, total:52, goleador:"Vedat Muriqi",           goles:21},
+      {Equipo:"Osasuna",          dep:33, total:48, goleador:"Ante Budimir",           goles:16},
+      {Equipo:"Celta Vigo",       dep:30, total:37, goleador:"Lucas Boyé",             goles:11},
+      {Equipo:"Valencia",         dep:28, total:36, goleador:"Alexander Sorloth",      goles:10},
+      {Equipo:"Mallorca",         dep:26, total:42, goleador:"Mikel Oyarzabal",        goles:11},
+      {Equipo:"Sevilla",          dep:25, total:44, goleador:"Borja Iglesias",         goles:11},
+      {Equipo:"Real Sociedad",    dep:24, total:50, goleador:"Ferran Torres",          goles:12},
+      {Equipo:"Villarreal",       dep:23, total:52, goleador:"Jorge de Frutos",        goles:12},
+      {Equipo:"Atlético Madrid",  dep:22, total:68, goleador:"Kylian Mbappé",          goles:15},
+      {Equipo:"Real Madrid",      dep:21, total:78, goleador:"Vinicius Júnior",        goles:16},
+      {Equipo:"Athletic Club",    dep:20, total:55, goleador:"Vladyslav Vanat",        goles:11},
+      {Equipo:"Barcelona",        dep:18, total:89, goleador:"Robert Lewandowski",     goles:16}
+    ]
+  },
 
-var container = document.getElementById('rows');
+  bundesliga: {
+    note: '<span class="badge">Caso extremo</span><strong>Bayern München</strong> depende en un <strong>44%</strong> de Harry Kane (32 goles de 73). Es el caso más extremo de la liga. <strong>Leverkusen</strong> (18%) reparte mejor el peligro entre sus jugadores.',
+    data: [
+      {Equipo:"Bayern München",   dep:44, total:73, goleador:"Harry Kane",             goles:32},
+      {Equipo:"Stuttgart",        dep:33, total:55, goleador:"Deniz Undav",            goles:18},
+      {Equipo:"Dortmund",         dep:28, total:50, goleador:"Serhou Guirassy",        goles:14},
+      {Equipo:"Hoffenheim",       dep:26, total:46, goleador:"Andrej Kramarić",        goles:12},
+      {Equipo:"Heidenheim",       dep:26, total:46, goleador:"Yan Diomande",           goles:12},
+      {Equipo:"Freiburg",         dep:25, total:44, goleador:"Patrik Schick",          goles:11},
+      {Equipo:"Hertha Berlin",    dep:24, total:46, goleador:"Haris Tabakovic",        goles:11},
+      {Equipo:"Mainz",            dep:23, total:43, goleador:"Jonathan Burkardt",      goles:10},
+      {Equipo:"RB Leipzig",       dep:21, total:60, goleador:"Ermedin Demirović",      goles:13},
+      {Equipo:"Wolfsburg",        dep:20, total:45, goleador:"Fisnik Asllani",         goles:9},
+      {Equipo:"Eintracht",        dep:19, total:55, goleador:"Maximilian Beier",       goles:10},
+      {Equipo:"Leverkusen",       dep:18, total:72, goleador:"Mohamed Amoura",         goles:13}
+    ]
+  },
 
-data.forEach(function(d) {
-  var pct = (d.dep / MAX * 100).toFixed(2);
-  var col = d.dep >= 35 ? 'var(--red)' : d.dep >= 30 ? 'var(--orange)' : 'var(--blue)';
-  var bg  = d.dep >= 35 ? '#C0392B'    : d.dep >= 30 ? '#E67E22'        : '#2471A3';
+  seriea: {
+    note: '<span class="badge">Caso extremo</span><strong>Hellas Verona</strong> depende en un <strong>38%</strong> de Anastasios Douvikas (11 goles de 29). Una baja de este jugador dejaría al equipo muy limitado ofensivamente. <strong>Inter de Milán</strong> (18%) tiene el ataque más equilibrado.',
+    data: [
+      {Equipo:"Hellas Verona",    dep:38, total:29, goleador:"Anastasios Douvikas",    goles:11},
+      {Equipo:"Lecce",            dep:33, total:30, goleador:"Nikola Krstović",        goles:10},
+      {Equipo:"Monza",            dep:31, total:32, goleador:"Keinan Davis",           goles:10},
+      {Equipo:"Cagliari",         dep:29, total:31, goleador:"Gianluca Scamacca",      goles:9},
+      {Equipo:"Torino",           dep:27, total:37, goleador:"Giovanni Simeone",       goles:10},
+      {Equipo:"Empoli",           dep:26, total:38, goleador:"Andrea Pinamonti",       goles:10},
+      {Equipo:"Fiorentina",       dep:24, total:46, goleador:"Moise Kean",             goles:11},
+      {Equipo:"Roma",             dep:23, total:52, goleador:"Donyell Malen",          goles:12},
+      {Equipo:"Napoli",           dep:22, total:59, goleador:"Kenan Yıldız",           goles:13},
+      {Equipo:"AC Milan",         dep:21, total:52, goleador:"Rasmus Højlund",         goles:11},
+      {Equipo:"Juventus",         dep:20, total:55, goleador:"Marcus Thuram",          goles:11},
+      {Equipo:"Atalanta",         dep:19, total:72, goleador:"Lautaro Martínez",       goles:14},
+      {Equipo:"Inter de Milán",   dep:18, total:78, goleador:"Lautaro Martínez",       goles:14}
+    ]
+  },
 
-  var row = document.createElement('div');
-  row.className = 'row';
-  row.innerHTML =
-    '<div class="label-cell">' +
-      '<div class="team-name">'   + d.team   + '</div>' +
-      '<div class="scorer-name">' + d.scorer + ' · ' + d.goals + ' goles</div>' +
-    '</div>' +
-    '<div class="bar-cell">' +
-      '<div class="bar-track">' +
-        '<div class="bar-fill" style="width:' + pct + '%;background:' + bg + '"></div>' +
-      '</div>' +
-    '</div>' +
-    '<div class="val-cell" style="color:' + col + '">' + d.dep + '%</div>';
+  ligue1: {
+    note: '<span class="badge">Caso extremo</span><strong>Strasbourg</strong> depende en un <strong>41%</strong> de Esteban Lepaul (17 goles de 41). Es el equipo más frágil ofensivamente de la Ligue 1. <strong>PSG</strong> (17%) tiene el ataque más repartido de la liga.',
+    data: [
+      {Equipo:"Strasbourg",       dep:41, total:41, goleador:"Esteban Lepaul",         goles:17},
+      {Equipo:"Clermont",         dep:37, total:43, goleador:"Joaquin Panichelli",      goles:16},
+      {Equipo:"Rennes",           dep:31, total:48, goleador:"Mason Greenwood",        goles:15},
+      {Equipo:"Montpellier",      dep:28, total:43, goleador:"Odsonne Édouard",        goles:12},
+      {Equipo:"Reims",            dep:26, total:46, goleador:"Folarin Balogun",        goles:12},
+      {Equipo:"Nantes",           dep:25, total:44, goleador:"Pavel Šulc",             goles:11},
+      {Equipo:"Nice",             dep:23, total:52, goleador:"Bradley Barcola",        goles:12},
+      {Equipo:"Lyon",             dep:22, total:55, goleador:"Wesley Said",            goles:12},
+      {Equipo:"Marseille",        dep:21, total:62, goleador:"Florian Thauvin",        goles:13},
+      {Equipo:"Lens",             dep:20, total:50, goleador:"Ansu Fati",              goles:10},
+      {Equipo:"Monaco",           dep:19, total:63, goleador:"Pierre-E. Aubameyang",   goles:12},
+      {Equipo:"PSG",              dep:17, total:88, goleador:"Ousmane Dembélé",        goles:15}
+    ]
+  }
+};
 
-  container.appendChild(row);
-});
+  let synth = null;
 
-window.addEventListener('load', function() {
-  var avgPct = (avg / MAX * 100);
+  function getSynth() {
+    if (!synth) {
+      synth = new Tone.Synth({
+        oscillator: {
+          type: "sine"
+        },
+        envelope: {
+          attack: 0.01,
+          decay: 0.2,
+          sustain: 0.1,
+          release: 0.4
+        }
+      }).toDestination();
+    }
+    return synth;
+  }
 
-  document.querySelectorAll('.bar-track').forEach(function(track) {
-    var line = document.createElement('div');
-    line.className = 'avg-line';
-    line.style.left   = avgPct + '%';
-    line.style.height = '100%';
-    track.appendChild(line);
+  async function playSound(dep) {
+    try {
+      await Tone.start();
+
+      const synth = getSynth();
+
+      let note;
+      let waveform;
+      let duration;
+      let description;
+
+      if (dep >= 35) {
+        note = "C6";
+        waveform = "square";
+        duration = "8n";
+      } else if (dep >= 30) {
+        note = "G4";
+        waveform = "triangle";
+        duration = "4n";
+      } else {
+        note = "C3";
+        waveform = "sine";
+        duration = "2n";
+      }
+
+    synth.oscillator.type = waveform;
+    synth.triggerAttackRelease(note, duration);
+
+    const noteBox = document.querySelector(".sound-note");
+    if (noteBox) {
+      noteBox.textContent = description;
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function getColor(dep) {
+  if (dep >= 35) {
+    return '#C62828';
+  }
+  if (dep >= 30) {
+    return '#FB8C00';
+  }
+  return '#2E7D32'; 
+}
+
+function getAvg(data) {
+  var s = 0;
+  data.forEach(function(d){ s += d.dep; });
+  return Math.round(s / data.length);
+}
+
+function renderChart(leagueKey, animate) {
+  var league = leagues[leagueKey];
+  var sorted = league.data.slice().sort(function(a, b) {
+    return b.dep - a.dep;
   });
 
-  document.getElementById('avgLabel').style.paddingLeft = (avgPct - 1.5) + '%';
-  document.getElementById('avgLabel').textContent = '▲ Promedio: ' + avg + '%';
-});
+  var equipos = [];
+  var deps = [];
+  var colors = [];
+  var hover = [];
+
+  sorted.forEach(function(d) {
+    equipos.push(d.Equipo);
+    deps.push(d.dep);
+    colors.push(getColor(d.dep));
+    hover.push(
+      '<b>' + d.goleador + '</b><br>' +
+      d.goles + ' goles de ' + d.total
+    );
+  });
+
+  var avg = getAvg(sorted);
+
+  var trace = {
+    x: deps,
+    y: equipos,
+    type: 'bar',
+    orientation: 'h',
+    text: deps.map(function(dep) {
+      return dep + '%';
+    }),
+    textposition: 'outside',
+    cliponaxis: false,
+    hovertemplate: null,
+    hoverinfo: 'none',
+    marker: {
+      color: colors
+    }
+  };
+
+
+  var layout = {
+    hovermode: 'closest',
+    xaxis: {
+      title: 'Dependencia (%)',
+      range: [0, 50]
+    },
+    yaxis: {
+      autorange: 'reversed'
+    },
+    margin: {
+      l: 150,
+      t: 10,
+      r: 60,
+      b: 45
+    },
+    shapes: [
+      {
+        type: 'line',
+        x0: avg,
+        x1: avg,
+        y0: -0.5,
+        y1: sorted.length - 0.5,
+        line: {
+          dash: 'dash',
+          color: 'gray',
+          width: 1.2
+        }
+      }
+    ],
+    annotations: [
+      {
+        x: avg,
+        y: sorted[sorted.length - 1].Equipo,
+        xref: 'x',
+        yref: 'y',
+        text: 'Promedio: ' + avg + '%',
+        showarrow: false,
+        font: {
+          size: 11,
+          color: '#666'
+        },
+        xanchor: 'left',
+        bgcolor: 'white',
+        borderpad: 3
+      }
+    ]
+  };
+
+  var fn = animate ? Plotly.react : Plotly.newPlot;
+  fn('chart', [trace], layout, {
+    displayModeBar: false,
+    responsive: true
+  });
+
+  document.getElementById('chart').on('plotly_click', function(eventData) {
+    var idx = eventData.points[0].pointIndex;
+    showPanel(sorted[idx]);
+    playSound(sorted[idx].dep);
+  });
+
+  document.getElementById('footer-note').innerHTML = league.note;
+  resetPanel();
+}
+
+function showPanel(d) {
+  var panel = document.getElementById('panel');
+  panel.classList.remove('empty');
+  var golesResto = d.total - d.goles;
+  var pctResto = Math.round((golesResto / d.total) * 100);
+  var color = getColor(d.dep);
+
+  panel.innerHTML =
+    '<div class="panel-team">' + d.Equipo + '</div>' +
+    '<div class="panel-row">Goleador: <span>' + d.goleador + '</span></div>' +
+    '<div class="panel-row">Goles anotados: <span>' + d.goles + ' (' + d.dep + '%)</span></div>' +
+    '<div class="panel-row">Goles del equipo: <span>' + d.total + '</span></div>' +
+    '<div class="panel-label">Dependencia (0% → 50%)</div>' +
+    '<div class="dep-meter"><div class="dep-needle" style="left:' + (d.dep/50*100) + '%"></div></div>' +
+    '<div class="panel-label">Si se lesiona, el equipo retiene:</div>' +
+    '<div class="bar-wrap"><div class="bar-fill" style="width:' + pctResto + '%;background:' + color + ';"></div></div>' +
+    '<div class="bar-label-row"><span>' + golesResto + ' goles (' + pctResto + '%)</span><span>de ' + d.total + '</span></div>' +
+    '<div class="sound-note">' + '</div>';
+}
+
+function resetPanel() {
+  var panel = document.getElementById('panel');
+  panel.classList.add('empty');
+  panel.innerHTML = '<div class="panel-hint">Haz clic en<br>un equipo para<br>ver su detalle</div>';
+}
+
+function switchLeague(key, btn) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+  renderChart(key, true);
+}
+
+renderChart('premier', false);
 </script>
 </body>
 </html>
