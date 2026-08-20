@@ -222,6 +222,14 @@
       margin-top: 4px;
       line-height: 1.35;
     }
+
+    .btn-icon { /* Logos de los equipos de futbol del proyecto */
+      display: flex;
+      width: 2.0em; /* Ancho acorde a medida de la letras */
+      height: 2.0em; /* Alto acorde a medida de la letras*/
+      object-fit: contain; /* Imagen dentro del botón  */
+      vertical-align: middle;
+    }
 </style>
 </head>
 
@@ -273,7 +281,8 @@ console.log("Callback Protobject registrado en index.html");
     <div id="side">
       <div class="controls-title">Liga</div>
       <div class="tabs">
-        <button class="tab active" onclick="switchLeague('premier', this)">🏴 Premier League</button>
+        <button class="tab active" onclick="switchLeague('premier', this)"><img src="https://assets.football-logos.cc/logos/england/1500x1500/english-premier-league.4d68127f.png" alt="Premier League Logo" class="btn-icon">Premier League</button>
+        <!-- Alexis Sánchez no debió haberse ido del Arsenal -->
         <button class="tab" onclick="switchLeague('laliga', this)">🇪🇸 La Liga</button>
         <button class="tab" onclick="switchLeague('bundesliga', this)">🇩🇪 Bundesliga</button>
         <button class="tab" onclick="switchLeague('seriea', this)">🇮🇹 Serie A</button>
